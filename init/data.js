@@ -1,0 +1,311 @@
+module.exports = [
+  // Electronics (10)
+  {
+    productName: "Wireless Mouse",
+    productId: "ELEC001",
+    quantity: 25,
+    category: "Electronics",
+  },
+  {
+    productName: "Bluetooth Speaker",
+    productId: "ELEC002",
+    quantity: 10,
+    category: "Electronics",
+  },
+  {
+    productName: "Keyboard",
+    productId: "ELEC003",
+    quantity: 0,
+    category: "Electronics",
+  },
+  {
+    productName: "LED Monitor",
+    productId: "ELEC004",
+    quantity: 14,
+    category: "Electronics",
+  },
+  {
+    productName: "USB-C Charger",
+    productId: "ELEC005",
+    quantity: 8,
+    category: "Electronics",
+  },
+  {
+    productName: "Laptop Stand",
+    productId: "ELEC006",
+    quantity: 22,
+    category: "Electronics",
+  },
+  {
+    productName: "Noise Cancelling Headphones",
+    productId: "ELEC007",
+    quantity: 18,
+    category: "Electronics",
+  },
+  {
+    productName: "Smartphone Holder",
+    productId: "ELEC008",
+    quantity: 7,
+    category: "Electronics",
+  },
+  {
+    productName: "HDMI Cable",
+    productId: "ELEC009",
+    quantity: 33,
+    category: "Electronics",
+  },
+  {
+    productName: "Webcam",
+    productId: "ELEC010",
+    quantity: 12,
+    category: "Electronics",
+  },
+
+  // Apparel (10)
+  {
+    productName: "Cotton T-Shirt",
+    productId: "APP001",
+    quantity: 14,
+    category: "Apparel",
+  },
+  {
+    productName: "Denim Jacket",
+    productId: "APP002",
+    quantity: 2,
+    category: "Apparel",
+  },
+  {
+    productName: "Formal Shirt",
+    productId: "APP003",
+    quantity: 20,
+    category: "Apparel",
+  },
+  {
+    productName: "Chinos",
+    productId: "APP004",
+    quantity: 6,
+    category: "Apparel",
+  },
+  {
+    productName: "Sweatshirt",
+    productId: "APP005",
+    quantity: 11,
+    category: "Apparel",
+  },
+  {
+    productName: "Running Shorts",
+    productId: "APP006",
+    quantity: 13,
+    category: "Apparel",
+  },
+  {
+    productName: "Woolen Cap",
+    productId: "APP007",
+    quantity: 5,
+    category: "Apparel",
+  },
+  {
+    productName: "Leather Belt",
+    productId: "APP008",
+    quantity: 17,
+    category: "Apparel",
+  },
+  {
+    productName: "Ankle Socks",
+    productId: "APP009",
+    quantity: 60,
+    category: "Apparel",
+  },
+  {
+    productName: "Track Pants",
+    productId: "APP010",
+    quantity: 4,
+    category: "Apparel",
+  },
+
+  // Kitchenware (10)
+  {
+    productName: "Pressure Cooker",
+    productId: "KIT001",
+    quantity: 0,
+    category: "Kitchenware",
+  },
+  {
+    productName: "Non-stick Pan",
+    productId: "KIT002",
+    quantity: 9,
+    category: "Kitchenware",
+  },
+  {
+    productName: "Cutlery Set",
+    productId: "KIT003",
+    quantity: 16,
+    category: "Kitchenware",
+  },
+  {
+    productName: "Dinner Plates (6)",
+    productId: "KIT004",
+    quantity: 12,
+    category: "Kitchenware",
+  },
+  {
+    productName: "Water Bottle (Steel)",
+    productId: "KIT005",
+    quantity: 23,
+    category: "Kitchenware",
+  },
+  {
+    productName: "Mixing Bowl",
+    productId: "KIT006",
+    quantity: 5,
+    category: "Kitchenware",
+  },
+  {
+    productName: "Kitchen Tongs",
+    productId: "KIT007",
+    quantity: 15,
+    category: "Kitchenware",
+  },
+  {
+    productName: "Tea Kettle",
+    productId: "KIT008",
+    quantity: 7,
+    category: "Kitchenware",
+  },
+  {
+    productName: "Vegetable Peeler",
+    productId: "KIT009",
+    quantity: 19,
+    category: "Kitchenware",
+  },
+  {
+    productName: "Measuring Cups",
+    productId: "KIT010",
+    quantity: 3,
+    category: "Kitchenware",
+  },
+
+  // Stationery (10)
+  {
+    productName: "Notebook Pack",
+    productId: "STAT001",
+    quantity: 120,
+    category: "Stationery",
+  },
+  {
+    productName: "Ballpoint Pen Set",
+    productId: "STAT002",
+    quantity: 75,
+    category: "Stationery",
+  },
+  {
+    productName: "Highlighters",
+    productId: "STAT003",
+    quantity: 40,
+    category: "Stationery",
+  },
+  {
+    productName: "Graph Paper Pad",
+    productId: "STAT004",
+    quantity: 18,
+    category: "Stationery",
+  },
+  {
+    productName: "Stapler",
+    productId: "STAT005",
+    quantity: 10,
+    category: "Stationery",
+  },
+  {
+    productName: "Binder Clips",
+    productId: "STAT006",
+    quantity: 55,
+    category: "Stationery",
+  },
+  {
+    productName: "Whiteboard Markers",
+    productId: "STAT007",
+    quantity: 22,
+    category: "Stationery",
+  },
+  {
+    productName: "Sticky Notes",
+    productId: "STAT008",
+    quantity: 38,
+    category: "Stationery",
+  },
+  {
+    productName: "Scissors",
+    productId: "STAT009",
+    quantity: 13,
+    category: "Stationery",
+  },
+  {
+    productName: "Erasers",
+    productId: "STAT010",
+    quantity: 100,
+    category: "Stationery",
+  },
+
+  // Food & Beverages (10)
+  {
+    productName: "Instant Noodles (12-pack)",
+    productId: "FOOD001",
+    quantity: 18,
+    category: "Food & Beverages",
+  },
+  {
+    productName: "Canned Soda (24-pack)",
+    productId: "FOOD002",
+    quantity: 5,
+    category: "Food & Beverages",
+  },
+  {
+    productName: "Granola Bars (Box of 10)",
+    productId: "FOOD003",
+    quantity: 8,
+    category: "Food & Beverages",
+  },
+  {
+    productName: "Packaged Juice",
+    productId: "FOOD004",
+    quantity: 25,
+    category: "Food & Beverages",
+  },
+  {
+    productName: "Chocolate Cookies",
+    productId: "FOOD005",
+    quantity: 14,
+    category: "Food & Beverages",
+  },
+  {
+    productName: "Bottled Water (12)",
+    productId: "FOOD006",
+    quantity: 19,
+    category: "Food & Beverages",
+  },
+  {
+    productName: "Potato Chips (Large)",
+    productId: "FOOD007",
+    quantity: 11,
+    category: "Food & Beverages",
+  },
+  {
+    productName: "Tea Bags (100)",
+    productId: "FOOD008",
+    quantity: 31,
+    category: "Food & Beverages",
+  },
+  {
+    productName: "Coffee Pouch",
+    productId: "FOOD009",
+    quantity: 9,
+    category: "Food & Beverages",
+  },
+  {
+    productName: "Energy Drink Can",
+    productId: "FOOD010",
+    quantity: 6,
+    category: "Food & Beverages",
+  },
+];

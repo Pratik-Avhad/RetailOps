@@ -1,0 +1,41 @@
+<% layout("/layouts/boilerplate.ejs") -%>
+    <style>
+        .dashboardCard {
+            border: 2px solid black;
+            border-radius: 16px;
+            overflow-y: hidden;
+        }
+    </style>
+
+    <body>
+        <h2>Welcome to Your DashBoard</h2>
+        <div class="container">
+            <div class="row mb-3 " style="height: 40vh;">
+                <div class="col ms-3 dashboardCard bg-light">
+                    inventory Updates
+                    
+                        <ul class="row">
+                            <% for(item of Items) { %>
+                                <a href="/inventory/new?name=<%=item.productName%>" class="col-6">
+                                    <li>
+                                        <%=item.productName%>
+                                    </li>
+                                </a>
+                                <% } %>
+                        </ul>
+                    
+                </div>
+                <div class="col ms-3 dashboardCard bg-light">
+                    order updates
+                </div>
+            </div>
+            <div class="row mb-3 " style="height: 40vh ;">
+                <div class="col ms-3 dashboardCard bg-light ">
+                    inventory Updates
+                </div>
+                <div class="col ms-3 dashboardCard bg-light">
+                    order updates
+                </div>
+            </div>
+        </div>
+    </body>

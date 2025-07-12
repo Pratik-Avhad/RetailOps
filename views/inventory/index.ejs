@@ -1,0 +1,65 @@
+<% layout("/layouts/boilerplate.ejs") -%>
+
+    <body>
+        <div class="inventaryMenu row mt-3">
+            <div class="invenHeading col-2">
+                <a href="/inventory"
+                    class="link-dark link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">My
+                    Inventory</a>
+            </div>
+            <div class="inveSearch col-6">
+                <form action="/inventory" class="input-group mb-3" method="get">
+                    <input type="text" class="form-control" <% if(search) { %> value=<%=search%>
+                        <% } %> name="search" placeholder="Product Name">
+                            <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Search</button>
+                </form>
+            </div>
+            <div class="dropdown col-2">
+                <a class="btn btn-info dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    Categories
+                </a>
+
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/inventory/electronics">Electronics</a></li>
+                    <li><a class="dropdown-item" href="/inventory/apparel">Apparel</a></li>
+                    <li><a class="dropdown-item" href="/inventory/kitchenware">Kitchenware</a></li>
+                    <li><a class="dropdown-item" href="/inventory/stationery">Stationery</a></li>
+                    <li><a class="dropdown-item" href="/inventory/food & beverages">Food & Beverages</a></li>
+                </ul>
+            </div>
+            <div class="newInven col">
+                <a href="/inventory/new" class="btn btn-success">Add Inventory</a>
+            </div>
+        </div>
+        <div class="inventoryTable">
+            <table class="table table-primary table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">Product</th>
+                        <th scope="col">ProductId</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Category</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% for( item of Items ){ %>
+                        <tr>
+                            <td>
+                                <%= item.productName %>
+                            </td>
+                            <td>
+                                <%= item.productId %>
+                            </td>
+                            <td>
+                                <%= item.quantity %>
+                            </td>
+                            <td>
+                                <%= item.category %>
+                            </td>
+                        </tr>
+                        <% } %>
+                </tbody>
+            </table>
+        </div>
+    </body>

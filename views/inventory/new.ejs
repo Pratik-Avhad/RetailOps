@@ -1,0 +1,80 @@
+<% layout("/layouts/boilerplate.ejs") -%>
+
+    <h2>Add Multiple Inventory Items</h2>
+
+    <form action="/inventory" method="POST">
+        <div id="product-list">
+            <div class="product-group border p-3 rounded mb-3 position-relative">
+                <div class="mb-2">
+                    <input type="text" class="form-control" name="productName[]"
+                         value="<%= item ? item.productName : '' %>" placeholder="Product Name" required>
+                </div>
+                <div class="mb-2">
+                    <input type="text" class="form-control" name="productId[]" placeholder="Product ID" required
+                    value="<%= item ? item.productId : '' %>">
+                </div>
+                <div class="mb-2">
+                    <input type="number" class="form-control" name="quantity[]" placeholder="Quantity" required>
+                </div>
+                <div class="mb-2">
+                    <select class="form-select" name="category[]" required>
+                        <option value="">Category</option>
+                        <option>Electronics</option>
+                        <option>Apparel</option>
+                        <option>Kitchenware</option>
+                        <option>Stationery</option>
+                        <option>Food & Beverages</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeProduct(this)">Delete</button>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary mb-3" onclick="addProduct()">+ Add More</button>
+        <br>
+        <button type="submit" class="btn btn-success">Submit All</button>
+    </form>
+
+    <script>
+        function addProduct() {
+            const group = document.querySelector('.product-group');
+            const clone = group.cloneNode(true);
+
+            // Clear input values
+            clone.querySelectorAll('input, select').forEach(input => input.value = '');
+
+            const productNameInput = clone.querySelector('input[name="productName[]"]');
+            productNameInput.addEventListener('blur', handleAutoFill);
+            document.getElementById('product-list').appendChild(clone);
+        }
+
+        function removeProduct(button) {
+            const group = button.closest('.product-group');
+            const allGroups = document.querySelectorAll('.product-group');
+
+            if (allGroups.length > 1) {
+                group.remove();
+            } else {
+                alert("At least one product is required.");
+            }
+        }
+
+        function handleAutoFill(event) {
+            const input = event.target;
+            const name = input.value.trim();
+            if (!name) return;
+
+            fetch(`/inventory/check?name=${encodeURIComponent(name)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data) {
+                        const group = input.closest('.product-group');
+                        group.querySelector('input[name="productId[]"]').value = data.productId;
+                        group.querySelector('select[name="category[]"]').value = data.category;
+                    }
+                });
+        }
+
+        // Add event listener to first row on page load
+        document.querySelector('input[name="productName[]"]').addEventListener('blur', handleAutoFill);
+    </script>
