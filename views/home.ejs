@@ -1,0 +1,36 @@
+<% layout("/layouts/boilerplate.ejs") -%>
+
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <h1 class="display-4 mb-4">Welcome to RetailOps</h1>
+                <p class="lead mb-4">Your comprehensive retail inventory management solution</p>
+                
+                <% if (user) { %>
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Welcome back, <%= user.displayName %>!</h5>
+                            <p class="card-text">Email: <%= user.email %></p>
+                            <div class="mt-3">
+                                <a href="/dashboard" class="btn btn-primary me-2">Go to Dashboard</a>
+                                <a href="/inventory" class="btn btn-success me-2">View Inventory</a>
+                                <a href="/logout" class="btn btn-outline-danger">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Get Started</h5>
+                            <p class="card-text">Please sign in to access the inventory management system.</p>
+                            <a href="/auth/google" class="btn btn-primary btn-lg">
+                                <i class="fab fa-google me-2"></i>Sign in with Google
+                            </a>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</body> 

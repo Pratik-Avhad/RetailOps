@@ -1,0 +1,329 @@
+<% layout("/layouts/boilerplate.ejs") -%>
+
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Order Details</h2>
+                    <a href="/orders" class="btn btn-outline-secondary">Back to Orders</a>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5>Order #<%= order._id.toString().slice(-8) %></h5>
+                                    <div>
+                                        <span class="badge bg-<%= order.status === 'pending' ? 'warning' : 
+                                                       order.status === 'confirmed' ? 'info' : 
+                                                       order.status === 'shipped' ? 'primary' : 
+                                                       order.status === 'delivered' ? 'success' : 'danger' %> me-2">
+                                            <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                                        </span>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="loadTracking()">
+                                            <i class="fas fa-truck me-1"></i>Track Order
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Product</th>
+                                                <th>Category</th>
+                                                <th>Quantity</th>
+                                                <th>Price</th>
+                                                <th>Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% for (let orderItem of order.items) { %>
+                                                <% if (orderItem.item) { %>
+                                                    <tr>
+                                                        <td><%= orderItem.item.productName %></td>
+                                                        <td><%= orderItem.item.category %></td>
+                                                        <td><%= orderItem.quantity %></td>
+                                                        <td>$<%= orderItem.price.toFixed(2) %></td>
+                                                        <td>$<%= (orderItem.quantity * orderItem.price).toFixed(2) %></td>
+                                                    </tr>
+                                                <% } else { %>
+                                                    <tr class="table-warning">
+                                                        <td colspan="5" class="text-center">
+                                                            <em>Item no longer available (may have been deleted)</em>
+                                                        </td>
+                                                    </tr>
+                                                <% } %>
+                                            <% } %>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-active">
+                                                <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                                                <td><strong>$<%= order.totalAmount.toFixed(2) %></strong></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6>Order Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Order Date:</strong><br>
+                                   <%= new Date(order.orderDate).toLocaleString() %></p>
+                                
+                                <% if (order.deliveryDate) { %>
+                                    <p><strong>Delivery Date:</strong><br>
+                                       <%= new Date(order.deliveryDate).toLocaleDateString() %></p>
+                                <% } %>
+                                
+                                <p><strong>Payment Method:</strong><br>
+                                   <%= order.paymentMethod.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) %></p>
+                                
+                                <% if (order.notes) { %>
+                                    <p><strong>Notes:</strong><br>
+                                       <%= order.notes %></p>
+                                <% } %>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Shipping Address</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>
+                                    <%= order.shippingAddress.street %><br>
+                                    <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> <%= order.shippingAddress.zipCode %><br>
+                                    <%= order.shippingAddress.country %>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Order Tracking Section -->
+                        <div class="card mt-3" id="tracking-section" style="display: none;">
+                            <div class="card-header">
+                                <h6>Order Tracking</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="tracking-timeline">
+                                    <!-- Timeline will be loaded here -->
+                                </div>
+                                
+                                <!-- Status Update Section (Admin Only) -->
+                                <% if (user && user.isAdmin) { %>
+                                    <div class="mt-3" id="status-update-section">
+                                        <h6>Update Order Status (Admin Only)</h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <select class="form-select" id="status-select">
+                                                    <option value="">Select new status</option>
+                                                    <option value="confirmed">Confirm Order</option>
+                                                    <option value="shipped">Ship Order</option>
+                                                    <option value="delivered">Mark as Delivered</option>
+                                                    <option value="cancelled">Cancel Order</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <button class="btn btn-primary" onclick="updateOrderStatus()">
+                                                    Update Status
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% } else { %>
+                                    <div class="mt-3 alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Order status updates are managed by administrators only.
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const orderId = '<%= order._id %>';
+        const currentStatus = '<%= order.status %>';
+        
+        function loadTracking() {
+            const trackingSection = document.getElementById('tracking-section');
+            const trackingTimeline = document.getElementById('tracking-timeline');
+            
+            if (trackingSection.style.display === 'none') {
+                // Show tracking section
+                trackingSection.style.display = 'block';
+                
+                // Load tracking data
+                fetch(`/orders/${orderId}/tracking`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            trackingTimeline.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                            return;
+                        }
+                        
+                        displayTrackingTimeline(data.trackingTimeline, data.currentStatus);
+                    })
+                    .catch(error => {
+                        console.error('Error loading tracking:', error);
+                        trackingTimeline.innerHTML = '<div class="alert alert-danger">Failed to load tracking information</div>';
+                    });
+            } else {
+                trackingSection.style.display = 'none';
+            }
+        }
+        
+        function displayTrackingTimeline(timeline, currentStatus) {
+            const trackingTimeline = document.getElementById('tracking-timeline');
+            
+            let timelineHTML = '<div class="timeline">';
+            
+            timeline.forEach((step, index) => {
+                const isActive = step.status === currentStatus;
+                const isCompleted = step.completed;
+                
+                timelineHTML += `
+                    <div class="timeline-item ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}">
+                        <div class="timeline-icon">
+                            <span class="icon">${step.icon}</span>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">${step.title}</h6>
+                            <p class="timeline-description">${step.description}</p>
+                            ${step.date ? `<small class="text-muted">${new Date(step.date).toLocaleString()}</small>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            timelineHTML += '</div>';
+            trackingTimeline.innerHTML = timelineHTML;
+        }
+        
+        function updateOrderStatus() {
+            const newStatus = document.getElementById('status-select').value;
+            
+            if (!newStatus) {
+                alert('Please select a status');
+                return;
+            }
+            
+            fetch(`/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Order status updated successfully!');
+                    location.reload(); // Refresh page to show updated status
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating status:', error);
+                alert('Failed to update order status');
+            });
+        }
+        
+        // Update status options based on current status
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelect = document.getElementById('status-select');
+            const validTransitions = {
+                pending: ['confirmed', 'cancelled'],
+                confirmed: ['shipped', 'cancelled'],
+                shipped: ['delivered'],
+                delivered: [],
+                cancelled: []
+            };
+            
+            const availableTransitions = validTransitions[currentStatus] || [];
+            
+            // Clear existing options
+            statusSelect.innerHTML = '<option value="">Select new status</option>';
+            
+            // Add available transitions
+            availableTransitions.forEach(status => {
+                const option = document.createElement('option');
+                option.value = status;
+                option.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                statusSelect.appendChild(option);
+            });
+        });
+    </script>
+
+    <style>
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+        
+        .timeline-item.completed {
+            opacity: 1;
+        }
+        
+        .timeline-item.active {
+            opacity: 1;
+            font-weight: bold;
+        }
+        
+        .timeline-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .timeline-item.completed .timeline-icon {
+            background: #28a745;
+            color: white;
+        }
+        
+        .timeline-item.active .timeline-icon {
+            background: #007bff;
+            color: white;
+        }
+        
+        .timeline-content {
+            flex: 1;
+        }
+        
+        .timeline-title {
+            margin: 0 0 5px 0;
+            font-weight: 600;
+        }
+        
+        .timeline-description {
+            margin: 0;
+            color: #6c757d;
+        }
+    </style>
+</body> 

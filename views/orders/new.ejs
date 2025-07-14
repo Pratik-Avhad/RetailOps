@@ -1,0 +1,199 @@
+<% layout("/layouts/boilerplate.ejs") -%>
+
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2>Place New Order</h2>
+                
+                <% if (items && items.length > 0) { %>
+                    <form action="/orders" method="POST">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Select Items</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Select</th>
+                                                        <th>Product</th>
+                                                        <th>Category</th>
+                                                        <th>Available</th>
+                                                        <th>Quantity</th>
+                                                        <th>Price</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <% for (let item of items) { %>
+                                                        <tr>
+                                                            <td>
+                                                                <input type="checkbox" name="items[]" value="<%= item._id %>" class="form-check-input item-checkbox">
+                                                            </td>
+                                                            <td><%= item.productName %></td>
+                                                            <td><%= item.category %></td>
+                                                            <td><%= item.quantity %></td>
+                                                            <td>
+                                                                <input type="number" name="quantities[]" min="1" max="<%= item.quantity %>" class="form-control quantity-input" disabled>
+                                                            </td>
+                                                            <td>
+                                                                <input type="number" name="prices[]" step="0.01" min="0" class="form-control price-input" placeholder="0.00" disabled>
+                                                            </td>
+                                                        </tr>
+                                                    <% } %>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Shipping Information</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Street Address</label>
+                                            <input type="text" name="shippingAddress[street]" class="form-control" required>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label">City</label>
+                                                <input type="text" name="shippingAddress[city]" class="form-control" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">State</label>
+                                                <input type="text" name="shippingAddress[state]" class="form-control" required>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label">ZIP Code</label>
+                                                <input type="text" name="shippingAddress[zipCode]" class="form-control" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Country</label>
+                                                <input type="text" name="shippingAddress[country]" class="form-control" value="USA" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h5>Payment & Notes</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Payment Method</label>
+                                            <select name="paymentMethod" class="form-select" required>
+                                                <option value="">Select Payment Method</option>
+                                                <option value="credit_card">Credit Card</option>
+                                                <option value="debit_card">Debit Card</option>
+                                                <option value="paypal">PayPal</option>
+                                                <option value="cash_on_delivery">Cash on Delivery</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Notes (Optional)</label>
+                                            <textarea name="notes" class="form-control" rows="3" placeholder="Any special instructions..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mt-3">
+                                    <div class="card-body">
+                                        <h6>Order Summary</h6>
+                                        <div id="order-summary">
+                                            <p class="text-muted">Select items to see summary</p>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100" id="submit-order" disabled>
+                                            Place Order
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                <% } else { %>
+                    <div class="text-center py-5">
+                        <h4 class="text-muted">No items available</h4>
+                        <p class="text-muted">All items are currently out of stock.</p>
+                        <a href="/inventory" class="btn btn-primary">View Inventory</a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enable/disable quantity and price inputs based on checkbox
+        document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const row = this.closest('tr');
+                const quantityInput = row.querySelector('.quantity-input');
+                const priceInput = row.querySelector('.price-input');
+                
+                if (this.checked) {
+                    quantityInput.disabled = false;
+                    priceInput.disabled = false;
+                    quantityInput.required = true;
+                    priceInput.required = true;
+                    // Set default values
+                    if (!quantityInput.value) quantityInput.value = 1;
+                    if (!priceInput.value) priceInput.value = 0.00;
+                } else {
+                    quantityInput.disabled = true;
+                    priceInput.disabled = true;
+                    quantityInput.required = false;
+                    priceInput.required = false;
+                    quantityInput.value = '';
+                    priceInput.value = '';
+                }
+                updateOrderSummary();
+            });
+        });
+
+        // Update order summary
+        function updateOrderSummary() {
+            const selectedItems = document.querySelectorAll('.item-checkbox:checked');
+            const summaryDiv = document.getElementById('order-summary');
+            const submitBtn = document.getElementById('submit-order');
+            
+            if (selectedItems.length === 0) {
+                summaryDiv.innerHTML = '<p class="text-muted">Select items to see summary</p>';
+                submitBtn.disabled = true;
+                return;
+            }
+            
+            let total = 0;
+            let itemCount = 0;
+            
+            selectedItems.forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                const quantity = parseInt(row.querySelector('.quantity-input').value) || 0;
+                const price = parseFloat(row.querySelector('.price-input').value) || 0;
+                total += quantity * price;
+                itemCount += quantity;
+            });
+            
+            summaryDiv.innerHTML = `
+                <p><strong>Items:</strong> ${itemCount}</p>
+                <p><strong>Total:</strong> $${total.toFixed(2)}</p>
+            `;
+            submitBtn.disabled = total === 0;
+        }
+
+        // Add event listeners for quantity and price inputs
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('quantity-input') || e.target.classList.contains('price-input')) {
+                updateOrderSummary();
+            }
+        });
+    </script>
+</body> 

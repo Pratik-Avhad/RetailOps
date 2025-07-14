@@ -1,0 +1,182 @@
+<% layout("/layouts/boilerplate.ejs") -%>
+
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2><i class="fas fa-crown me-2"></i>Admin Dashboard</h2>
+                <p class="text-muted">Welcome back, <%= user.displayName %>!</p>
+                
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Orders</h5>
+                                <h3><%= totalOrders %></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Pending Orders</h5>
+                                <h3><%= pendingOrders %></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Users</h5>
+                                <h3><%= totalUsers %></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Items</h5>
+                                <h3><%= totalItems %></h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Orders -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Recent Orders</h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (recentOrders && recentOrders.length > 0) { %>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Customer</th>
+                                            <th>Status</th>
+                                            <th>Total</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% for (let order of recentOrders) { %>
+                                            <% if (order.customer) { %>
+                                                <tr>
+                                                    <td>#<%= order._id.toString().slice(-8) %></td>
+                                                    <td><%= order.customer.displayName || 'Unknown Customer' %></td>
+                                                    <td>
+                                                        <span class="badge bg-<%= order.status === 'pending' ? 'warning' : 
+                                                               order.status === 'confirmed' ? 'info' : 
+                                                               order.status === 'shipped' ? 'primary' : 
+                                                               order.status === 'delivered' ? 'success' : 'danger' %>">
+                                                            <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                                                        </span>
+                                                    </td>
+                                                    <td>$<%= order.totalAmount.toFixed(2) %></td>
+                                                    <td><%= new Date(order.orderDate).toLocaleDateString() %></td>
+                                                    <td>
+                                                        <a href="/orders/<%= order._id %>" class="btn btn-sm btn-outline-primary">View</a>
+                                                        <button class="btn btn-sm btn-outline-success" onclick="quickUpdateStatus('<%= order._id %>', '<%= order.status %>')">
+                                                            Update
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            <% } %>
+                                        <% } %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } else { %>
+                            <p class="text-muted">No orders found.</p>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <!-- Admin Actions -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5>Admin Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-warning" onclick="cleanupOrders()">
+                                    <i class="fas fa-broom me-2"></i>Cleanup Orphaned Orders
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="/inventory" class="btn btn-outline-primary">
+                                    <i class="fas fa-boxes me-2"></i>Manage Inventory
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function quickUpdateStatus(orderId, currentStatus) {
+            const validTransitions = {
+                pending: ['confirmed', 'cancelled'],
+                confirmed: ['shipped', 'cancelled'],
+                shipped: ['delivered'],
+                delivered: [],
+                cancelled: []
+            };
+            
+            const availableTransitions = validTransitions[currentStatus] || [];
+            
+            if (availableTransitions.length === 0) {
+                alert('No further status updates available for this order.');
+                return;
+            }
+            
+            const nextStatus = availableTransitions[0];
+            const statusName = nextStatus.charAt(0).toUpperCase() + nextStatus.slice(1);
+            
+            if (confirm(`Update order status to "${statusName}"?`)) {
+                fetch(`/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: nextStatus })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Order status updated to ${statusName}!`);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating status:', error);
+                    alert('Failed to update order status');
+                });
+            }
+        }
+        
+        function cleanupOrders() {
+            if (confirm('This will remove all orders with no valid items. Continue?')) {
+                fetch('/orders/cleanup')
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Error cleaning up orders:', error);
+                        alert('Failed to cleanup orders');
+                    });
+            }
+        }
+    </script>
+</body> 

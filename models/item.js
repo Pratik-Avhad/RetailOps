@@ -26,6 +26,11 @@ const itemSchema = new Schema({
       "Food & Beverages",
     ],
   },
+  owner: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
   addedAt: {
     type: Date,
     default: Date.now,

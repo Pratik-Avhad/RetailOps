@@ -1,0 +1,105 @@
+<% layout("/layouts/boilerplate.ejs") -%>
+
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>My Orders</h2>
+                    <a href="/orders/new" class="btn btn-primary">Place New Order</a>
+                </div>
+                
+                <% if (orders && orders.length > 0) { %>
+                    <div class="row">
+                        <% for (let order of orders) { %>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">Order #<%= order._id.toString().slice(-8) %></h6>
+                                        <span class="badge bg-<%= order.status === 'pending' ? 'warning' : 
+                                                           order.status === 'confirmed' ? 'info' : 
+                                                           order.status === 'shipped' ? 'primary' : 
+                                                           order.status === 'delivered' ? 'success' : 'danger' %>">
+                                            <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">
+                                            <strong>Date:</strong> <%= new Date(order.orderDate).toLocaleDateString() %><br>
+                                            <strong>Total:</strong> $<%= order.totalAmount.toFixed(2) %><br>
+                                            <strong>Items:</strong> <%= order.items.length %> item(s)
+                                        </p>
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <a href="/orders/<%= order._id %>" class="btn btn-sm btn-outline-primary me-2">View Details</a>
+                                                <% if (user && user.isAdmin) { %>
+                                                    <button class="btn btn-sm btn-outline-success" onclick="quickUpdateStatus('<%= order._id %>', '<%= order.status %>')">
+                                                        Update Status
+                                                    </button>
+                                                <% } %>
+                                            </div>
+                                            <small class="text-muted">
+                                                <%= new Date(order.orderDate).toLocaleDateString() %>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-5">
+                        <h4 class="text-muted">No orders yet</h4>
+                        <p class="text-muted">Start shopping to see your orders here!</p>
+                        <a href="/orders/new" class="btn btn-primary">Place Your First Order</a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function quickUpdateStatus(orderId, currentStatus) {
+            const validTransitions = {
+                pending: ['confirmed', 'cancelled'],
+                confirmed: ['shipped', 'cancelled'],
+                shipped: ['delivered'],
+                delivered: [],
+                cancelled: []
+            };
+            
+            const availableTransitions = validTransitions[currentStatus] || [];
+            
+            if (availableTransitions.length === 0) {
+                alert('No further status updates available for this order.');
+                return;
+            }
+            
+            const nextStatus = availableTransitions[0]; // Use the first available transition
+            const statusName = nextStatus.charAt(0).toUpperCase() + nextStatus.slice(1);
+            
+            if (confirm(`Update order status to "${statusName}"?`)) {
+                fetch(`/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: nextStatus })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Order status updated to ${statusName}!`);
+                        location.reload(); // Refresh page to show updated status
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating status:', error);
+                    alert('Failed to update order status');
+                });
+            }
+        }
+    </script>
+</body> 
