@@ -236,7 +236,7 @@ app.get("/orders", isAuthenticated, async (req, res) => {
 
 app.get("/orders/new", isAuthenticated, async (req, res) => {
   try {
-    const items = await Item.find({ quantity: { $gt: 0 } });
+    const items = await Item.find({ quantity: { $gt: 0 } ,owner:req.user._id});
     console.log("Available items for order:", items.length);
     res.render("orders/new.ejs", { items });
   } catch (err) {
