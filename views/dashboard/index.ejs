@@ -12,30 +12,23 @@
         <div class="container">
             <div class="row mb-3 " style="height: 40vh;">
                 <div class="col ms-3 dashboardCard bg-light">
-                    inventory Updates
-                    
-                        <ul class="row">
-                            <% for(item of Items) { %>
-                                <a href="/inventory/new?name=<%=item.productName%>" class="col-6">
-                                    <li>
+                    <h2>Inventory Updates </h2>
+
+                    <ul class="row">
+                        <% for(item of Items) { %>
+
+                            <li>
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    Low Stock Alert:<a href="/inventory/new?name=<%=item.productName%>" class="col-6">
                                         <%=item.productName%>
-                                    </li>
-                                </a>
-                                <% } %>
-                        </ul>
-                    
-                </div>
-                <div class="col ms-3 dashboardCard bg-light">
-                    order updates
-                </div>
-            </div>
-            <div class="row mb-3 " style="height: 40vh ;">
-                <div class="col ms-3 dashboardCard bg-light ">
-                    inventory Updates
-                </div>
-                <div class="col ms-3 dashboardCard bg-light">
-                    order updates
+                                    </a> is running low.
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                        aria-label="Close"></button>
+                                </div>
+                            </li>
+
+                            <% } %>
+                    </ul>
                 </div>
             </div>
-        </div>
     </body>
