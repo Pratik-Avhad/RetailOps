@@ -3,8 +3,11 @@ const mongoose = require("mongoose");
 const Item = require("../models/item");
 const User = require("../models/user");
 const inventoryItems = require("./data");
+const config = require("../config/config");
 
-mongoose.connect('mongodb://127.0.0.1:27017/RetailOps')
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+
+mongoose.connect(config.mongodb.uri)
   .then(() => console.log('Connected!'));
 
 const AddItemsToInventory = async() => {
