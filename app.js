@@ -111,9 +111,9 @@ app.get("/inventory", isAuthenticated, async (req, res) => {
   let Items;
   if (search) {
     const regex = new RegExp(search, "i");
-    Items = await Item.find({ productName: regex }).populate("owner");
+    Items = await Item.find({ productName: regex,owner: req.user._id }).populate("owner");
   } else {
-    Items = await Item.find({}).populate("owner");
+    Items = await Item.find({owner: req.user._id}).populate("owner");
   }
   console.log("Items", Items);
   res.render("inventory/index.ejs", { Items, search });
