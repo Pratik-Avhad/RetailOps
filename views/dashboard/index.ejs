@@ -12,30 +12,28 @@
         <div class="container">
             <div class="row mb-3 " style="height: 40vh;">
                 <div class="col ms-3 dashboardCard bg-light">
-                    inventory Updates
-                    
-                        <ul class="row">
-                            <% for(item of Items) { %>
-                                <a href="/inventory/new?name=<%=item.productName%>" class="col-6">
-                                    <li>
-                                        <%=item.productName%>
-                                    </li>
-                                </a>
-                                <% } %>
-                        </ul>
-                    
+                    <h2>Inventory Updates</h2>
+
+                    <ul class="row">
+                        <% for(item of Items) { %>
+
+                            <li>
+                                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                    <a href="/inventory/new?name=<%=item.productName%>" class="col-6">
+                                        ⚠️ Low Stock: Reorder <%=item.productName%> soon!
+                                    </a>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                        aria-label="Close"></button>
+                                </div>
+
+                            </li>
+
+                            <% } %>
+                    </ul>
+
                 </div>
-                <div class="col ms-3 dashboardCard bg-light">
-                    order updates
-                </div>
+
             </div>
-            <div class="row mb-3 " style="height: 40vh ;">
-                <div class="col ms-3 dashboardCard bg-light ">
-                    inventory Updates
-                </div>
-                <div class="col ms-3 dashboardCard bg-light">
-                    order updates
-                </div>
-            </div>
+
         </div>
     </body>

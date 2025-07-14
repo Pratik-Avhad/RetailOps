@@ -115,7 +115,7 @@ app.get("/inventory/new", isAuthenticated, async (req, res) => {
   let { name } = req.query || "";
   let item = "";
   if (name) {
-    item = await Item.findOne({ productName: name }).populate("owner");
+    item = await Item.findOne({ productName: name}).populate("owner");
   }
   console.log(item);
   res.render("inventory/new", { item });
@@ -130,7 +130,7 @@ app.get("/inventory/check", isAuthenticated, async (req, res) => {
   });
   console.log(item);
   if (item) {
-    res.json({ productId: item.productId, category: item.category });
+    res.json({ productId: item.productId, category: item.category, owner:req.user._id });
   } else {
     res.json(null); // No match
   }
@@ -149,7 +149,7 @@ app.post("/inventory", isAuthenticated, async (req, res) => {
 
   try {
     for (const item of items) {
-      const existingItem = await Item.findOne({ productId: item.productId });
+      const existingItem = await Item.findOne({ productId: item.productId ,owner:req.user._id });
 
       if (existingItem) {
         // If item exists, increase its quantity
@@ -178,17 +178,17 @@ app.get("/inventory/:category", isAuthenticated, async (req, res) => {
   if (search) {
     const regex = new RegExp(search, "i");
     const regexCat = new RegExp(category, "i");
-    Items = await Item.find({ productName: regex, category: regexCat }).populate("owner");
+    Items = await Item.find({ productName: regex, category: regexCat, owner:req.user._id }).populate("owner");
   } else {
     const regex = new RegExp(category, "i");
-    Items = await Item.find({ category: regex }).populate("owner");
+    Items = await Item.find({ category: regex ,owner:req.user._id}).populate("owner");
   }
   res.render(`inventory/category.ejs`, { Items, search, category });
 });
 
 //dashboard routes
 app.get("/dashboard", isAuthenticated, async (req, res) => {
-  const Items = await Item.find({ quantity: { $lt: 10 } });
+  const Items = await Item.find({ quantity: { $lt: 10 }, owner:req.user._id });
   res.render("dashboard/index.ejs", { Items });
 });
 
