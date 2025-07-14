@@ -11,6 +11,7 @@ const Order = require("./models/order");
 const User = require("./models/user");
 const { checkUrl } = require("./middlewares/dashboard");
 const { isAuthenticated, isAdmin } = require("./middlewares/auth");
+const MongoStore = require("connect-mongo");
 
 // Import passport configuration
 require("./config/passport");
@@ -27,6 +28,10 @@ app.use(
     secret: config.session.secret,
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: config.mongodb.uri,
+      ttl: 24 * 60 * 60, // Session lifetime in seconds (24 hours)
+    }),
     cookie: {
       secure: false, // Set to true in production with HTTPS
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -49,26 +54,30 @@ mongoose
   .then(() => console.log("Connected to MongoDB!"));
 
 // Authentication routes
-app.get("/auth/google", (req, res, next) => {
-  console.log('🚀 Starting Google OAuth flow...');
-  next();
-}, passport.authenticate("google"));
+app.get(
+  "/auth/google",
+  (req, res, next) => {
+    console.log("🚀 Starting Google OAuth flow...");
+    next();
+  },
+  passport.authenticate("google")
+);
 
 app.get(
   "/auth/google/callback",
   (req, res, next) => {
-    console.log('🔄 OAuth callback received');
+    console.log("🔄 OAuth callback received");
     next();
   },
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
-    console.log('✅ Authentication successful, redirecting to dashboard');
+    console.log("✅ Authentication successful, redirecting to dashboard");
     res.redirect("/dashboard");
   }
 );
 
 app.get("/logout", (req, res) => {
-  console.log('👋 User logging out:', req.user?.displayName);
+  console.log("👋 User logging out:", req.user?.displayName);
   req.logout((err) => {
     if (err) {
       console.error("Logout error:", err);
@@ -79,15 +88,17 @@ app.get("/logout", (req, res) => {
 
 // Debug route to check authentication status
 app.get("/auth/status", (req, res) => {
-  console.log('🔍 Auth status check - User:', req.user);
+  console.log("🔍 Auth status check - User:", req.user);
   res.json({
     isAuthenticated: req.isAuthenticated(),
-    user: req.user ? {
-      id: req.user._id,
-      displayName: req.user.displayName,
-      email: req.user.email,
-      lastLogin: req.user.lastLogin
-    } : null
+    user: req.user
+      ? {
+          id: req.user._id,
+          displayName: req.user.displayName,
+          email: req.user.email,
+          lastLogin: req.user.lastLogin,
+        }
+      : null,
   });
 });
 
@@ -103,9 +114,12 @@ app.get("/inventory", isAuthenticated, async (req, res) => {
   let Items;
   if (search) {
     const regex = new RegExp(search, "i");
-    Items = await Item.find({ productName: regex ,owner:req.user._id}).populate("owner");
+    Items = await Item.find({
+      productName: regex,
+      owner: req.user._id,
+    }).populate("owner");
   } else {
-    Items = await Item.find({owner:req.user._id}).populate("owner");
+    Items = await Item.find({ owner: req.user._id }).populate("owner");
   }
   res.render("inventory/index.ejs", { Items, search });
 });
@@ -115,7 +129,7 @@ app.get("/inventory/new", isAuthenticated, async (req, res) => {
   let { name } = req.query || "";
   let item = "";
   if (name) {
-    item = await Item.findOne({ productName: name}).populate("owner");
+    item = await Item.findOne({ productName: name }).populate("owner");
   }
   console.log(item);
   res.render("inventory/new", { item });
@@ -130,7 +144,11 @@ app.get("/inventory/check", isAuthenticated, async (req, res) => {
   });
   console.log(item);
   if (item) {
-    res.json({ productId: item.productId, category: item.category, owner:req.user._id });
+    res.json({
+      productId: item.productId,
+      category: item.category,
+      owner: req.user._id,
+    });
   } else {
     res.json(null); // No match
   }
@@ -149,7 +167,10 @@ app.post("/inventory", isAuthenticated, async (req, res) => {
 
   try {
     for (const item of items) {
-      const existingItem = await Item.findOne({ productId: item.productId ,owner:req.user._id });
+      const existingItem = await Item.findOne({
+        productId: item.productId,
+        owner: req.user._id,
+      });
 
       if (existingItem) {
         // If item exists, increase its quantity
@@ -178,17 +199,23 @@ app.get("/inventory/:category", isAuthenticated, async (req, res) => {
   if (search) {
     const regex = new RegExp(search, "i");
     const regexCat = new RegExp(category, "i");
-    Items = await Item.find({ productName: regex, category: regexCat, owner:req.user._id }).populate("owner");
+    Items = await Item.find({
+      productName: regex,
+      category: regexCat,
+      owner: req.user._id,
+    }).populate("owner");
   } else {
     const regex = new RegExp(category, "i");
-    Items = await Item.find({ category: regex ,owner:req.user._id}).populate("owner");
+    Items = await Item.find({ category: regex, owner: req.user._id }).populate(
+      "owner"
+    );
   }
   res.render(`inventory/category.ejs`, { Items, search, category });
 });
 
 //dashboard routes
 app.get("/dashboard", isAuthenticated, async (req, res) => {
-  const Items = await Item.find({ quantity: { $lt: 10 }, owner:req.user._id });
+  const Items = await Item.find({ quantity: { $lt: 10 }, owner: req.user._id });
   res.render("dashboard/index.ejs", { Items });
 });
 
@@ -196,37 +223,37 @@ app.get("/dashboard", isAuthenticated, async (req, res) => {
 app.get("/orders", isAuthenticated, async (req, res) => {
   try {
     let orders;
-    
+
     // If user is admin, show all orders. Otherwise, show only user's orders
     if (req.user.isAdmin) {
       orders = await Order.find({})
         .populate({
           path: "customer",
-          model: "User"
+          model: "User",
         })
         .populate({
           path: "items.item",
-          model: "Item"
+          model: "Item",
         })
         .sort({ orderDate: -1 });
     } else {
       orders = await Order.find({ customer: req.user._id })
         .populate({
           path: "customer",
-          model: "User"
+          model: "User",
         })
         .populate({
           path: "items.item",
-          model: "Item"
+          model: "Item",
         })
         .sort({ orderDate: -1 });
     }
-    
+
     // Filter out orders with no valid items
-    const validOrders = orders.filter(order => 
-      order.items.some(item => item.item !== null)
+    const validOrders = orders.filter((order) =>
+      order.items.some((item) => item.item !== null)
     );
-    
+
     res.render("orders/index.ejs", { orders: validOrders });
   } catch (err) {
     console.error("Error fetching orders:", err);
@@ -236,7 +263,10 @@ app.get("/orders", isAuthenticated, async (req, res) => {
 
 app.get("/orders/new", isAuthenticated, async (req, res) => {
   try {
-    const items = await Item.find({ quantity: { $gt: 0 } ,owner:req.user._id});
+    const items = await Item.find({
+      quantity: { $gt: 0 },
+      owner: req.user._id,
+    });
     console.log("Available items for order:", items.length);
     res.render("orders/new.ejs", { items });
   } catch (err) {
@@ -248,34 +278,35 @@ app.get("/orders/new", isAuthenticated, async (req, res) => {
 app.post("/orders", isAuthenticated, async (req, res) => {
   try {
     console.log("Order creation request body:", req.body);
-    
-    const { items, quantities, prices, shippingAddress, paymentMethod, notes } = req.body;
-    
+
+    const { items, quantities, prices, shippingAddress, paymentMethod, notes } =
+      req.body;
+
     // Validate required fields
     if (!items || !Array.isArray(items) || items.length === 0) {
       console.error("No items selected for order");
       return res.status(400).send("Please select at least one item");
     }
-    
+
     if (!paymentMethod) {
       console.error("No payment method selected");
       return res.status(400).send("Please select a payment method");
     }
-    
+
     // Process order items
     const orderItems = [];
     let totalAmount = 0;
-    
+
     for (let i = 0; i < items.length; i++) {
       const itemId = items[i];
       const quantity = parseInt(quantities[i]);
       const price = parseFloat(prices[i]);
-      
+
       console.log(`Processing item ${i}:`, { itemId, quantity, price });
-      
+
       if (itemId && quantity && price && quantity > 0 && price > 0) {
         const item = await Item.findById(itemId);
-        
+
         if (item && item.quantity >= quantity) {
           orderItems.push({
             item: itemId,
@@ -283,26 +314,34 @@ app.post("/orders", isAuthenticated, async (req, res) => {
             price: price,
           });
           totalAmount += quantity * price;
-          
+
           // Update item quantity
           item.quantity -= quantity;
           await item.save();
-          console.log(`Updated item ${item.productName}, new quantity: ${item.quantity}`);
+          console.log(
+            `Updated item ${item.productName}, new quantity: ${item.quantity}`
+          );
         } else {
           console.error(`Item ${itemId} not found or insufficient quantity`);
-          return res.status(400).send(`Item not found or insufficient quantity. Please refresh and try again.`);
+          return res
+            .status(400)
+            .send(
+              `Item not found or insufficient quantity. Please refresh and try again.`
+            );
         }
       }
     }
-    
+
     if (orderItems.length === 0) {
       console.error("No valid items in order");
-      return res.status(400).send("No valid items in order. Please check quantities and prices.");
+      return res
+        .status(400)
+        .send("No valid items in order. Please check quantities and prices.");
     }
-    
+
     console.log("Creating order with items:", orderItems);
     console.log("Total amount:", totalAmount);
-    
+
     const order = new Order({
       customer: req.user._id,
       items: orderItems,
@@ -317,7 +356,7 @@ app.post("/orders", isAuthenticated, async (req, res) => {
       paymentMethod,
       notes: notes || "",
     });
-    
+
     await order.save();
     console.log("Order created successfully:", order._id);
     res.redirect("/orders");
@@ -333,7 +372,7 @@ app.post("/orders/debug", isAuthenticated, (req, res) => {
   res.json({
     message: "Form data received",
     body: req.body,
-    user: req.user._id
+    user: req.user._id,
   });
 });
 
@@ -343,7 +382,7 @@ app.get("/admin/test", isAuthenticated, (req, res) => {
     user: req.user.displayName,
     email: req.user.email,
     isAdmin: req.user.isAdmin,
-    userId: req.user._id
+    userId: req.user._id,
   });
 });
 
@@ -352,38 +391,38 @@ app.put("/orders/:id/status", isAuthenticated, isAdmin, async (req, res) => {
   try {
     const { status } = req.body;
     const order = await Order.findById(req.params.id);
-    
+
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
-    
+
     // Validate status transition
     const validTransitions = {
       pending: ["confirmed", "cancelled"],
       confirmed: ["shipped", "cancelled"],
       shipped: ["delivered"],
       delivered: [], // Final state
-      cancelled: [] // Final state
+      cancelled: [], // Final state
     };
-    
+
     if (!validTransitions[order.status].includes(status)) {
-      return res.status(400).json({ 
-        error: `Invalid status transition from ${order.status} to ${status}` 
+      return res.status(400).json({
+        error: `Invalid status transition from ${order.status} to ${status}`,
       });
     }
-    
+
     // Update status and add timestamp
     order.status = status;
     if (status === "delivered") {
       order.deliveryDate = new Date();
     }
-    
+
     await order.save();
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: `Order status updated to ${status}`,
-      order: order 
+      order: order,
     });
   } catch (err) {
     console.error("Error updating order status:", err);
@@ -397,16 +436,19 @@ app.get("/orders/:id/tracking", isAuthenticated, async (req, res) => {
     const order = await Order.findById(req.params.id)
       .populate("customer")
       .populate("items.item");
-    
+
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
-    
+
     // Check if user owns this order OR if user is admin
-    if (!req.user.isAdmin && order.customer._id.toString() !== req.user._id.toString()) {
+    if (
+      !req.user.isAdmin &&
+      order.customer._id.toString() !== req.user._id.toString()
+    ) {
       return res.status(403).json({ error: "Access denied" });
     }
-    
+
     // Generate tracking timeline
     const trackingTimeline = [
       {
@@ -415,23 +457,31 @@ app.get("/orders/:id/tracking", isAuthenticated, async (req, res) => {
         description: "Your order has been placed and is being processed",
         date: order.orderDate,
         completed: true,
-        icon: "📋"
+        icon: "📋",
       },
       {
         status: "confirmed",
         title: "Order Confirmed",
         description: "Your order has been confirmed and is being prepared",
-        date: order.status === "confirmed" || order.status === "shipped" || order.status === "delivered" ? order.updatedAt : null,
+        date:
+          order.status === "confirmed" ||
+          order.status === "shipped" ||
+          order.status === "delivered"
+            ? order.updatedAt
+            : null,
         completed: ["confirmed", "shipped", "delivered"].includes(order.status),
-        icon: "✅"
+        icon: "✅",
       },
       {
         status: "shipped",
         title: "Order Shipped",
         description: "Your order has been shipped and is on its way",
-        date: order.status === "shipped" || order.status === "delivered" ? order.updatedAt : null,
+        date:
+          order.status === "shipped" || order.status === "delivered"
+            ? order.updatedAt
+            : null,
         completed: ["shipped", "delivered"].includes(order.status),
-        icon: "🚚"
+        icon: "🚚",
       },
       {
         status: "delivered",
@@ -439,14 +489,14 @@ app.get("/orders/:id/tracking", isAuthenticated, async (req, res) => {
         description: "Your order has been delivered successfully",
         date: order.deliveryDate,
         completed: order.status === "delivered",
-        icon: "📦"
-      }
+        icon: "📦",
+      },
     ];
-    
-    res.json({ 
-      order, 
+
+    res.json({
+      order,
       trackingTimeline,
-      currentStatus: order.status 
+      currentStatus: order.status,
     });
   } catch (err) {
     console.error("Error fetching order tracking:", err);
@@ -460,44 +510,50 @@ app.get("/admin", isAuthenticated, isAdmin, async (req, res) => {
   try {
     console.log("Loading admin dashboard for user:", req.user.displayName);
     console.log("User isAdmin:", req.user.isAdmin);
-    
+
     // Check if User model is available
     if (!User) {
       throw new Error("User model not available");
     }
-    
+
     const totalOrders = await Order.countDocuments();
     const pendingOrders = await Order.countDocuments({ status: "pending" });
     const totalUsers = await User.countDocuments();
     const totalItems = await Item.countDocuments();
-    
-    console.log("Statistics loaded:", { totalOrders, pendingOrders, totalUsers, totalItems });
-    
+
+    console.log("Statistics loaded:", {
+      totalOrders,
+      pendingOrders,
+      totalUsers,
+      totalItems,
+    });
+
     const recentOrders = await Order.find({})
       .populate({
         path: "customer",
-        model: "User"
+        model: "User",
       })
       .populate({
         path: "items.item",
-        model: "Item"
+        model: "Item",
       })
       .sort({ orderDate: -1 })
       .limit(10);
-    
+
     // Filter out orders with null customers or items
-    const validOrders = recentOrders.filter(order => 
-      order.customer && order.items.some(item => item.item !== null)
+    const validOrders = recentOrders.filter(
+      (order) =>
+        order.customer && order.items.some((item) => item.item !== null)
     );
-    
+
     console.log("Recent orders loaded:", validOrders.length);
-    
+
     res.render("admin/dashboard.ejs", {
       totalOrders,
       pendingOrders,
       totalUsers,
       totalItems,
-      recentOrders: validOrders
+      recentOrders: validOrders,
     });
   } catch (err) {
     console.error("Error loading admin dashboard:", err);
@@ -509,15 +565,15 @@ app.get("/orders/cleanup", isAuthenticated, isAdmin, async (req, res) => {
   try {
     const orders = await Order.find({}).populate("items.item");
     let cleanedCount = 0;
-    
+
     for (const order of orders) {
-      const validItems = order.items.filter(item => item.item !== null);
+      const validItems = order.items.filter((item) => item.item !== null);
       if (validItems.length === 0) {
         await Order.findByIdAndDelete(order._id);
         cleanedCount++;
       }
     }
-    
+
     res.json({ message: `Cleaned up ${cleanedCount} orphaned orders` });
   } catch (err) {
     console.error("Error cleaning up orders:", err);
@@ -531,24 +587,27 @@ app.get("/orders/:id", isAuthenticated, async (req, res) => {
       .populate("customer")
       .populate({
         path: "items.item",
-        model: "Item"
+        model: "Item",
       });
-    
+
     if (!order) {
       return res.status(404).send("Order not found");
     }
-    
+
     // Check if user owns this order OR if user is admin
-    if (!req.user.isAdmin && order.customer._id.toString() !== req.user._id.toString()) {
+    if (
+      !req.user.isAdmin &&
+      order.customer._id.toString() !== req.user._id.toString()
+    ) {
       return res.status(403).send("Access denied");
     }
-    
+
     // Check if order has any valid items
-    const validItems = order.items.filter(item => item.item !== null);
+    const validItems = order.items.filter((item) => item.item !== null);
     if (validItems.length === 0) {
       return res.status(404).send("Order has no valid items");
     }
-    
+
     res.render("orders/show.ejs", { order });
   } catch (err) {
     console.error("Error fetching order:", err);
