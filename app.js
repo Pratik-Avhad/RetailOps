@@ -111,9 +111,9 @@ app.get("/inventory", isAuthenticated, async (req, res) => {
   let Items;
   if (search) {
     const regex = new RegExp(search, "i");
-    Items = await Item.find({ productName: regex, owner: req.user}).populate("owner");
+    Items = await Item.find({ productName: regex }).populate("owner");
   } else {
-    Items = await Item.find({owner: req.user}).populate("owner");
+    Items = await Item.find({}).populate("owner");
   }
   console.log("Items", Items);
   res.render("inventory/index.ejs", { Items, search });
@@ -253,7 +253,7 @@ app.get("/orders", isAuthenticated, async (req, res) => {
 
 app.get("/orders/new", isAuthenticated, async (req, res) => {
   try {
-    const items = await Item.find({ quantity: { $gt: 0 } });
+    const items = await Item.find({ quantity: { $gt: 0 } ,owner:req.user._id});
     console.log("Available items for order:", items.length);
     res.render("orders/new.ejs", { items });
   } catch (err) {
